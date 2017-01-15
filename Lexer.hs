@@ -7,25 +7,24 @@ module Lexer (
   comma,
   commaSep1,
   parens,
+  natFloat,
   float,
+  integer,
   whitespace
   ) where
 import Control.Monad.Identity
 import Text.ParserCombinators.Parsec
 import Text.ParserCombinators.Parsec.Language
+import Text.ParserCombinators.Parsec.Number
 import qualified Text.ParserCombinators.Parsec.Token as Token
 
 languageDef :: LanguageDef st
 languageDef =
-  emptyDef { Token.reservedNames = ["gcd", "lcm", "pi", "exp", "sqrt", "log",
-                                    "sin", "tan", "cos", "asin", "atan", "acos",
-                                    "sinh", "tanh", "cosh", "asinh", "atanh", "acosh",
-                                    "trunc", "round", "ceil", "floor",
-                                    "true", "false"],
-             Token.reservedOpNames = ["+", "-", "*", "/", "%", "^", "!",
+  emptyDef { Token.reservedOpNames = ["+", "-", "*", "/", "%", "^", "!",
                                       "<", "<=", "==", ">=", ">", "!=",
                                       "?", ":",
-                                      "&&", "||", "~"]
+                                      "&&", "||", "~",
+                                      "->"]
            }
 
 type TokenParser st = Token.GenTokenParser String st Identity
@@ -42,5 +41,6 @@ comma      = Token.comma      lexer
 commaSep1  = Token.commaSep1  lexer
 parens     = Token.parens     lexer
 float      = Token.float      lexer
+integer    = Token.integer    lexer
 whitespace = Token.whiteSpace lexer
 

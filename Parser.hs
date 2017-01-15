@@ -1,6 +1,7 @@
 module Parser (
-  numExpr,
-  module Syntax
+  parseExpr,
+  module Syntax,
+  module Text.ParserCombinators.Parsec
   ) where
 import Lexer
 import Syntax
@@ -12,7 +13,16 @@ import Text.ParserCombinators.Parsec.Expr
 import Text.ParserCombinators.Parsec.Language
 import qualified Text.ParserCombinators.Parsec.Token as Token
 
-numExpr = do
+parseExpr :: String -> String -> Either ParseError NumExpr
+parseExpr = parse grammar
+
+grammar = do
+  whitespace
+  expr <- expr
+  eof
+  return expr
+
+expr = do
   e <- numExpr'
   e' <- optionMaybe ternary
   case e' of
@@ -21,50 +31,56 @@ numExpr = do
   
 ternary = do
   reservedOp "?"
-  ifTrue <- numExpr
+  ifTrue <- expr
   colon
-  ifFalse <- numExpr
+  ifFalse <- expr
   return (ifTrue, ifFalse)
 
-numExpr' = buildExpressionParser numTable numTerm <?> "numexpr"
+expr' = buildExpressionParser opTable term <?> "numexpr"
 
-numTable = [ [Prefix  (reservedOp "-"  >> return (UnaryExpr  Negate    ))            ]
-           , [Postfix (reservedOp "!"  >> return (UnaryExpr  Factorial ))            ]
-           , [Infix   (reservedOp "^"  >> return (BinaryExpr Pow       )) AssocRight ]
-           , [Infix   (reservedOp "*"  >> return (BinaryExpr Multiply  )) AssocLeft  ]
-           , [Infix   (reservedOp "/"  >> return (BinaryExpr Divide    )) AssocLeft  ]
-           , [Infix   (reservedOp "%"  >> return (BinaryExpr Modulo    )) AssocLeft  ]
-           , [Infix   (reservedOp "+"  >> return (BinaryExpr Add       )) AssocLeft  ]
-           , [Infix   (reservedOp "-"  >> return (BinaryExpr Subtract  )) AssocLeft  ]
-           , [Infix   (reservedOp "<"  >> return (BinaryExpr RelLT     )) AssocNone  ]
-           , [Infix   (reservedOp "<=" >> return (BinaryExpr RelLE     )) AssocNone  ]
-           , [Infix   (reservedOp "==" >> return (BinaryExpr RelEQ     )) AssocNone  ]
-           , [Infix   (reservedOp ">=" >> return (BinaryExpr RelGE     )) AssocNone  ]
-           , [Infix   (reservedOp ">"  >> return (BinaryExpr RelGT     )) AssocNone  ]
-           , [Infix   (reservedOp "!=" >> return (BinaryExpr RelNE     )) AssocNone  ]
-           , [Prefix  (reservedOp "~"  >> return (UnaryExpr  Not       ))            ]
-           , [Infix   (reservedOp "&&" >> return (BinaryExpr And       )) AssocLeft  ]
-           , [Infix   (reservedOp "||" >> return (BinaryExpr Or        )) AssocLeft  ] ]
+opTable =
+  [ [Prefix  (reservedOp "-"  >> return (UnaryExpr  Negate    ))            ]
+  , [Postfix (reservedOp "!"  >> return (UnaryExpr  Factorial ))            ]
+  , [Infix   (reservedOp "^"  >> return (BinaryExpr Pow       )) AssocRight ]
+  , [Infix   (reservedOp "*"  >> return (BinaryExpr Multiply  )) AssocLeft  ]
+  , [Infix   (reservedOp "/"  >> return (BinaryExpr Divide    )) AssocLeft  ]
+  , [Infix   (reservedOp "%"  >> return (BinaryExpr Modulo    )) AssocLeft  ]
+  , [Infix   (reservedOp "+"  >> return (BinaryExpr Add       )) AssocLeft  ]
+  , [Infix   (reservedOp "-"  >> return (BinaryExpr Subtract  )) AssocLeft  ]
+  , [Infix   (reservedOp "<"  >> return (BinaryExpr RelLT     )) AssocNone  ]
+  , [Infix   (reservedOp "<=" >> return (BinaryExpr RelLE     )) AssocNone  ]
+  , [Infix   (reservedOp "==" >> return (BinaryExpr RelEQ     )) AssocNone  ]
+  , [Infix   (reservedOp ">=" >> return (BinaryExpr RelGE     )) AssocNone  ]
+  , [Infix   (reservedOp ">"  >> return (BinaryExpr RelGT     )) AssocNone  ]
+  , [Infix   (reservedOp "!=" >> return (BinaryExpr RelNE     )) AssocNone  ]
+  , [Prefix  (reservedOp "~"  >> return (UnaryExpr  Not       ))            ]
+  , [Infix   (reservedOp "&&" >> return (BinaryExpr And       )) AssocLeft  ]
+  , [Infix   (reservedOp "||" >> return (BinaryExpr Or        )) AssocLeft  ] ]
 
-numTerm =  parens numTerm2
+term =  parens expr
+       <|> lambdaCall
+       <|> funcCall
        <|> liftM Variable identifier
-       <|> liftM Constant float
+       <|> floatConst
+       <|> liftM (Constant . fromInteger) integer
 
-numTerm2 = funcCall <|> lambdaCall <|> numExpr
-
+floatConst = do
+  f <- try float
+  return $ Constant f
+  
 funcCall = do
   name <- identifier
-  args <- parens $ commaSep1 numExpr
+  args <- parens $ commaSep1 expr
   return $ FuncCall (FuncRef name) args
 
 lambdaCall = do
   def <- braces lambdaDef
-  args <- parens $ commaSep1 numExpr
+  args <- parens $ commaSep1 expr
   return $ FuncCall def args
 
 lambdaDef = do
   params <- parens $ commaSep1 identifier
-  reservedOp ":"
-  def <- numExpr
+  reservedOp "->"
+  def <- expr
   return $ Lambda params def
 

@@ -9,7 +9,7 @@ import Control.Monad.Except
 import Control.Monad.Identity
 import Math.Gamma
 
-type EvalError = ExceptT String Identity
+type EvalError = Either String
 
 lookupBinary :: BinaryOp -> EvalError (Double -> Double -> Double)
 lookupBinary op =
