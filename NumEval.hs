@@ -2,9 +2,9 @@ module NumEval (
   eval,
   runable
   ) where
-import Parser
-import Translate
-import Binding
+import NumEval.Parser
+import NumEval.Translate
+import NumEval.Binding
 import qualified Data.Map.Strict as Map
 
 eval :: String -> String -> EvalError Double

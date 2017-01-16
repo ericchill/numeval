@@ -1,4 +1,4 @@
-module Binding (
+module NumEval.Binding (
   EvalError,
   Evaluator(..),
   Bindings(..),

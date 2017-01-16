@@ -1,10 +1,10 @@
-module Parser (
+module NumEval.Parser (
   parseExpr,
-  module Syntax,
-  module Text.ParserCombinators.Parsec
+  grammar,
+  expr
   ) where
-import Lexer
-import Syntax
+import NumEval.Lexer
+import NumEval.Syntax
 import System.IO
 import Control.Monad
 import Control.Monad.Identity

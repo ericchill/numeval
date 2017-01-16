@@ -1,16 +1,15 @@
-module Primitive (
+module NumEval.Primitive (
   lookupBinary,
   lookupUnary,
   builtInFuncs,
   builtInFuncs2,
   ffactorial
   ) where
-import Syntax
+import NumEval.Binding
+import NumEval.Syntax
 import Control.Monad.Except
 import Control.Monad.Identity
 import Math.Gamma
-
-type EvalError = Either String
 
 lookupBinary :: BinaryOp -> EvalError (Double -> Double -> Double)
 lookupBinary op =

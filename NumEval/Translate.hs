@@ -1,10 +1,11 @@
-module Translate (
+module NumEval.Translate (
   TranslateError,
   translate
   ) where
-import Binding
-import Parser
-import Primitive
+import NumEval.Binding
+import NumEval.Parser
+import NumEval.Primitive
+import NumEval.Syntax
 import Control.Applicative
 import qualified Data.Map.Strict as Map
 

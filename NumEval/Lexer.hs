@@ -1,4 +1,4 @@
-module Lexer (
+module NumEval.Lexer (
   identifier,
   reserved,
   reservedOp,

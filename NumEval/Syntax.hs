@@ -1,4 +1,4 @@
-module Syntax (
+module NumEval.Syntax (
   NumExpr(..),
   UnaryOp(..),
   BinaryOp(..),
