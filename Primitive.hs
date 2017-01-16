@@ -1,7 +1,6 @@
 module Primitive (
   lookupBinary,
   lookupUnary,
-  builtInConstants,
   builtInFuncs,
   builtInFuncs2,
   ffactorial
@@ -53,10 +52,6 @@ builtInFuncs2 :: [(String, Double -> Double -> Double)]
 builtInFuncs2 = [
   ("gcd", gcdFunc), ("lcm", lcmFunc), ("min", minFunc), ("max", maxFunc),
   ("atan2", atan2Func) ]
-
-builtInConstants :: [(String, Double)]
-builtInConstants = [("false", 0), ("true", 1), ("pi", pi)]
-
 
 relFunc :: (Double -> Double -> Bool) -> Double -> Double -> Double
 relFunc func a b =
