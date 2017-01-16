@@ -1,6 +1,6 @@
 module NumEval (
-  runable,
-  translate
+  eval,
+  runable
   ) where
 import Parser
 import Translate
@@ -15,6 +15,6 @@ eval ctx s = do
 runable :: String -> String -> EvalError Evaluator
 runable ctx s =
   case parseExpr ctx s of
+    Left err   -> throwError $ show err
     Right expr -> translate expr
-    Left err -> throwError $ show err
 

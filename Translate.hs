@@ -14,12 +14,10 @@ translate :: NumExpr -> TranslateError
 
 translate (Constant x) = return $ Evaluator $ \_ _ -> return x
 
-translate (Variable name)
-  | name == "false" = return $ Evaluator $ \_ _ -> return 0
-  | name == "true"  = return $ Evaluator $ \_ _ -> return 1
-  | name == "pi"    = return $ Evaluator $ \_ _ -> return pi
-  | otherwise =
-    return $ Evaluator $ \vars _ ->
+translate (Variable name) =
+  case Prelude.lookup name builtInConstants of
+    Just x -> return $ Evaluator $ \_ _ -> return x
+    _ -> return $ Evaluator $ \vars _ ->
       case Map.lookup name vars of
         Just e -> runEvaluator e vars []
         Nothing -> throwError $ "Variable " ++ show name ++ " is undefined."
@@ -51,10 +49,17 @@ translate (FuncCall func args) = mapM translate args >>= translateFunc func
 translateFunc :: Function -> [Evaluator] -> TranslateError
 
 translateFunc (FuncRef name) args =
-  return $ Evaluator $ \vars _ ->
-    case Map.lookup name vars of
-      Just func -> runEvaluator func vars args
-      Nothing   -> throwError $ "Function " ++ show name ++ " is undefined."
+  case length args of
+    1 -> case Prelude.lookup name builtInFuncs of
+      Just func -> return $ Evaluator $ \vars fooArgs ->
+        liftA func (runEvaluator (head args) vars fooArgs)
+      _ -> translateUserFuncCall name args
+    2 -> case Prelude.lookup name builtInFuncs2 of
+      Just func -> return $ Evaluator $ \vars fooArgs ->
+        liftA2 func (runEvaluator (head args) vars fooArgs)
+                    (runEvaluator (args !! 1) vars fooArgs)
+      _ -> translateUserFuncCall name args
+    _ -> translateUserFuncCall name args
 
 translateFunc (Lambda params expr) args = do
   expr' <- translate expr
@@ -62,3 +67,11 @@ translateFunc (Lambda params expr) args = do
     let vars'
           = foldl (\vs (k, v) -> Map.insert k v vs) vars $ zip params args
       in runEvaluator expr' vars' []
+
+
+translateUserFuncCall name args =
+  return $ Evaluator $ \vars fooArgs ->
+  case Map.lookup name vars of
+    Just func -> runEvaluator func vars args
+    Nothing   -> throwError $ "Function " ++ show name ++ " is undefined " ++
+      "(at least for " ++ show (length args) ++ " arguments)."

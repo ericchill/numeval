@@ -12,6 +12,7 @@ import Text.ParserCombinators.Parsec
 import Text.ParserCombinators.Parsec.Expr
 import Text.ParserCombinators.Parsec.Language
 import qualified Text.ParserCombinators.Parsec.Token as Token
+import Debug.Trace
 
 parseExpr :: String -> String -> Either ParseError NumExpr
 parseExpr = parse grammar
@@ -23,7 +24,7 @@ grammar = do
   return expr
 
 expr = do
-  e <- numExpr'
+  e <- expr'
   e' <- optionMaybe ternary
   case e' of
     Nothing -> return e
@@ -61,26 +62,22 @@ term =  parens expr
        <|> lambdaCall
        <|> funcCall
        <|> liftM Variable identifier
-       <|> floatConst
+       <|> liftM Constant (try float)
        <|> liftM (Constant . fromInteger) integer
 
-floatConst = do
-  f <- try float
-  return $ Constant f
-  
-funcCall = do
+funcCall = try $ do
   name <- identifier
   args <- parens $ commaSep1 expr
   return $ FuncCall (FuncRef name) args
 
-lambdaCall = do
+lambdaCall = try $ do
   def <- braces lambdaDef
   args <- parens $ commaSep1 expr
   return $ FuncCall def args
 
 lambdaDef = do
   params <- parens $ commaSep1 identifier
-  reservedOp "->"
+  colon
   def <- expr
   return $ Lambda params def
 
